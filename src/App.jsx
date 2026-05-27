@@ -37,6 +37,23 @@ const BreathingWaves = ({ className = "" }) => (
   </div>
 );
 
+// Unified premium inline vector logo component (never breaks or fails to resolve)
+const AcallmeLogo = ({ className = "w-10 h-10" }) => (
+  <svg 
+    viewBox="0 0 721 647" 
+    className={`${className} select-none`}
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path 
+      fillRule="evenodd" 
+      clipRule="evenodd" 
+      d="M307.472 69.4066C237.566 82.8436 178.107 122.561 138.452 182.31C78.6943 272.35 84.0529 391.802 151.253 467.594C158.498 475.766 164.403 485.104 164.374 488.345C164.345 491.588 160.758 499.988 156.402 507.011C139.806 533.784 137.797 540.265 143.435 548.817C149.398 557.85 149.819 557.868 206.215 551.632C265.388 545.091 318.816 530.054 350.868 510.925C386.916 489.411 438.22 443.123 464.354 408.534C489.701 374.984 499.829 349.872 499.964 320.253C500.08 293.934 494.728 278.901 479.951 264.066C452.557 236.557 398.54 236.528 369.127 264.008L360.059 272.478L346.763 261.177C324.676 242.399 289.709 235.624 263.266 244.997C231.734 256.171 212.731 283.923 212.676 318.874C212.605 361.135 229.144 390.346 286.234 448.797C306.408 469.452 322.304 486.959 321.558 487.703C320.809 488.443 313.168 492.044 304.576 495.703C280.502 505.951 242.606 515.001 214.511 517.211C190.325 519.113 189.184 518.909 191.589 513.112C197.404 499.107 200.396 482.723 198.506 475.243C197.394 470.847 188.55 458.418 178.852 447.625C144.544 409.44 130.644 368.414 133.017 312.333C137.485 206.669 207.471 127.353 316.682 104.191C347.776 97.5958 402.548 100.201 431.231 109.644C507.631 134.791 561.329 190.869 582.543 267.667C592.435 303.47 590.438 359.178 577.989 394.902C566.899 426.714 547.012 457.123 521.81 480.814C486.955 513.574 458.108 520.358 423.266 503.991C404.715 495.275 400.269 495.703 391.902 507.011C383.226 518.74 397.459 535.643 422.813 543.714C440.451 549.33 480.549 546.196 499.167 537.746C533.341 522.232 570.283 488.026 590.975 452.74C614.019 413.437 623.986 373.928 624 321.849C624.014 252.228 601.247 193.5 555.624 145.508C524.803 113.086 476.881 84.609 432.839 72.5479C406.907 65.4448 337.177 63.6985 307.472 69.4066ZM318.816 282.742C332.465 289.593 335.634 293.529 345.162 315.464C352.736 332.901 373.678 327.883 378.176 307.553C384.601 278.499 434.022 266.227 455.392 288.383C465.997 299.374 469.78 324.923 463.573 343.609C454.495 370.926 419.492 412.498 374.627 449.25L352.704 467.211L322.625 437.629C255.017 371.128 235.492 334.063 250.421 300.549C261.321 276.076 290.432 268.497 318.816 282.742Z" 
+      fill="#8fbdf1"
+    />
+  </svg>
+);
+
 function App() {
   // Navigation State
   const [activeProcess, setActiveProcess] = useState('processo1'); // 'processo1' | 'processo2'
@@ -411,11 +428,7 @@ function App() {
           {/* Logo Brand Space */}
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full border-[0.5px] border-[#b8cce4] flex items-center justify-center bg-white shadow-sm overflow-hidden select-none">
-              <img 
-                src="/Frame 10 (1).svg" 
-                alt="acallme logo" 
-                className="w-10 h-10 object-contain"
-              />
+              <AcallmeLogo className="w-10 h-10 object-contain" />
             </div>
             <div className="space-y-0.5">
               <div className="flex items-baseline gap-1">
@@ -854,11 +867,7 @@ function App() {
                   <div className="space-y-3 pb-4 border-b-[0.5px] border-[#b8cce4]/50">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full border-[0.5px] border-[#b8cce4] overflow-hidden flex items-center justify-center bg-white shadow-xs">
-                        <img 
-                          src="/Frame 10 (1).svg" 
-                          alt="Mariana Silva avatar" 
-                          className="w-7 h-7 object-contain"
-                        />
+                        <AcallmeLogo className="w-7 h-7 object-contain" />
                       </div>
                       <div>
                         <h3 className="font-display font-semibold text-slate-800 text-xs">Mariana Silva, 28 anos</h3>
@@ -1208,11 +1217,7 @@ function App() {
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b-[0.5px] border-[#b8cce4]/50">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full border-[0.5px] border-[#b8cce4] overflow-hidden flex items-center justify-center bg-white shadow-xs">
-                          <img 
-                            src="/Frame 10 (1).svg" 
-                            alt="logo" 
-                            className="w-8 h-8 object-contain"
-                          />
+                          <AcallmeLogo className="w-8 h-8 object-contain" />
                         </div>
                         <div>
                           <h2 className="font-display font-semibold text-lg text-slate-800">Relatório Clínico Expandido & Evolução</h2>
@@ -1384,15 +1389,17 @@ function App() {
                         setShowSaveModal(true);
                         setSaveSuccessState(false);
                       }}
-                      className="bg-[#8fbdf1] hover:bg-[#8fbdf1]/90 text-white font-display font-semibold px-5 py-2.5 rounded-lg text-xs          </div>
-        )}        <button 
-                  onClick={() => setShowPushToast(false)}
-                  className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                      className="bg-[#8fbdf1] hover:bg-[#8fbdf1]/90 text-white font-display font-semibold px-5 py-2.5 rounded-lg text-xs border-[0.5px] border-[#8fbdf1] transition-all shadow-[0_2px_4px_rgba(143,189,241,0.2)]"
+                    >
+                      Salvar Prontuário e Encerrar
+                    </button>
+                  </div>
+
+                </div>
+
               </div>
             )}
+
           </div>
         )}
 
