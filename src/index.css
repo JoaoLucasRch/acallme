@@ -1,0 +1,63 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Sulphur+Point:wght@300;400;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-brand-white: #ffffff;
+  --color-brand-babyBlue: #e6f2fc;
+  --color-brand-softGray: #b8cce4;
+  --color-brand-mediumGray: #8196b1;
+  --color-brand-mediumBlue: #8fbdf1;
+  --color-brand-accentBlue: #6AD8FF;
+  
+  --font-sans: 'Sulphur Point', sans-serif;
+  --font-display: 'Poppins', sans-serif;
+}
+
+body {
+  background-color: #ffffff;
+  color: #8196b1;
+  font-family: 'Sulphur Point', sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Premium minimalist custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #e6f2fc;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b8cce4;
+}
+
+/* Reset default Vite layout centering and constraints */
+#root {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  text-align: left !important;
+  border-inline: none !important;
+  min-height: 100vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+
+/* Custom fade animations for smooth transitions */
+.fade-enter {
+  opacity: 0;
+  transform: scale(0.98);
+}
+.fade-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 300ms ease, transform 300ms ease;
+}
