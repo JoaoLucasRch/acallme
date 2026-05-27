@@ -1384,17 +1384,15 @@ function App() {
                         setShowSaveModal(true);
                         setSaveSuccessState(false);
                       }}
-                      className="bg-[#8fbdf1] hover:bg-[#8fbdf1]/90 text-white font-display font-semibold px-5 py-2.5 rounded-lg text-xs border-[0.5px] border-[#8fbdf1] transition-all shadow-[0_2px_4px_rgba(143,189,241,0.2)]"
-                    >
-                      Salvar Prontuário e Encerrar
-                    </button>
-                  </div>
-
-                </div>
-
+                      className="bg-[#8fbdf1] hover:bg-[#8fbdf1]/90 text-white font-display font-semibold px-5 py-2.5 rounded-lg text-xs          </div>
+        )}        <button 
+                  onClick={() => setShowPushToast(false)}
+                  className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             )}
-
           </div>
         )}
 
