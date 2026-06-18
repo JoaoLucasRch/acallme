@@ -150,14 +150,23 @@ function App() {
 
   // Clinical Symptoms database
   const allSintomas = [
-    { id: 'Insônia', label: 'Insônia' },
-    { id: 'Estresse', label: 'Estresse' },
-    { id: 'Fadiga Crônica', label: 'Fadiga Crônica' },
-    { id: 'Aperto no Peito', label: 'Aperto no Peito' },
-    { id: 'Irritabilidade', label: 'Irritabilidade' },
-    { id: 'Dificuldade de Foco', label: 'Dificuldade de Foco' },
-    { id: 'Procrastinação', label: 'Procrastinação Freq.' },
-    { id: 'Insegurança', label: 'Insegurança Social' }
+    { id: 'Estresse', label: 'Estresse', type: 'cognitive' },
+    { id: 'Irritabilidade', label: 'Irritabilidade', type: 'cognitive' },
+    { id: 'Dificuldade de Foco', label: 'Dificuldade de Foco', type: 'cognitive' },
+    { id: 'Procrastinação', label: 'Procrastinação Freq.', type: 'cognitive' },
+    { id: 'Insegurança', label: 'Insegurança Social', type: 'cognitive' },
+    { id: 'Fadiga Crônica', label: 'Fadiga Crônica', type: 'cognitive' },
+    { id: 'Aperto no Peito', label: 'Aperto no Peito', type: 'cognitive' },
+    // Sintomas Físicos
+    { id: 'Tensão Muscular', label: 'Tensão Muscular', type: 'physical' },
+    { id: 'Palpitações Cardíacas', label: 'Palpitações Cardíacas', type: 'physical' },
+    { id: 'Falta de Ar', label: 'Falta de Ar', type: 'physical' },
+    { id: 'Dores de Estômago', label: 'Dores de Estômago', type: 'physical' },
+    { id: 'Insônia', label: 'Insônia', type: 'physical' },
+    { id: 'Sudorese Excessiva', label: 'Sudorese Excessiva', type: 'physical' },
+    { id: 'Fadiga Constante', label: 'Fadiga Constante', type: 'physical' },
+    { id: 'Ondas de Calor/Frio', label: 'Ondas de Calor/Frio', type: 'physical' },
+    { id: 'Alterações de Sono/Apetite', label: 'Alt. de Sono/Apetite', type: 'physical' }
   ];
 
   // Session timer countdown effect
@@ -599,36 +608,71 @@ function App() {
               </div>
 
               {/* Sintomas Atuais Check Grid */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-[11px] font-display font-semibold text-[#8196b1] uppercase tracking-wider">
-                    Sintomas Atuais
-                  </label>
-                  <span className="text-[10px] text-[#8196b1] font-sans font-normal">
-                    {selectedSintomas.length} mapeados
-                  </span>
+              <div className="space-y-4">
+                {/* Emocionais & Cognitivos */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[11px] font-display font-semibold text-[#8196b1] uppercase tracking-wider">
+                      Sintomas Emocionais & Cognitivos
+                    </label>
+                    <span className="text-[9px] text-[#8196b1] font-sans font-normal">
+                      {selectedSintomas.filter(id => allSintomas.find(s => s.id === id && s.type === 'cognitive')).length} selecionados
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {allSintomas.filter(s => s.type === 'cognitive').map((sintoma) => {
+                      const isSelected = selectedSintomas.includes(sintoma.id);
+                      return (
+                        <button
+                          key={sintoma.id}
+                          onClick={() => handleToggleSintoma(sintoma.id)}
+                          className={`text-left px-3 py-2 rounded-lg text-xs font-sans font-normal transition-all duration-300 border-[0.5px] ${
+                            isSelected 
+                              ? 'bg-[#e6f2fc] text-slate-800 border-[#8196b1]/40' 
+                              : 'bg-white text-slate-600 border-[#b8cce4]/70 hover:bg-slate-50/50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span>{sintoma.label}</span>
+                            {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#6AD8FF]"></span>}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-2">
-                  {allSintomas.map((sintoma) => {
-                    const isSelected = selectedSintomas.includes(sintoma.id);
-                    return (
-                      <button
-                        key={sintoma.id}
-                        onClick={() => handleToggleSintoma(sintoma.id)}
-                        className={`text-left px-3 py-2.5 rounded-lg text-xs font-sans font-normal transition-all duration-300 border-[0.5px] ${
-                          isSelected 
-                            ? 'bg-[#e6f2fc] text-slate-800 border-[#8196b1]/40' 
-                            : 'bg-white text-slate-600 border-[#b8cce4]/70 hover:bg-slate-50/50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span>{sintoma.label}</span>
-                          {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#6AD8FF]"></span>}
-                        </div>
-                      </button>
-                    );
-                  })}
+
+                {/* Sintomas Físicos */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[11px] font-display font-semibold text-[#8196b1] uppercase tracking-wider">
+                      Sintomas Físicos
+                    </label>
+                    <span className="text-[9px] text-[#8196b1] font-sans font-normal">
+                      {selectedSintomas.filter(id => allSintomas.find(s => s.id === id && s.type === 'physical')).length} selecionados
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {allSintomas.filter(s => s.type === 'physical').map((sintoma) => {
+                      const isSelected = selectedSintomas.includes(sintoma.id);
+                      return (
+                        <button
+                          key={sintoma.id}
+                          onClick={() => handleToggleSintoma(sintoma.id)}
+                          className={`text-left px-3 py-2 rounded-lg text-xs font-sans font-normal transition-all duration-300 border-[0.5px] ${
+                            isSelected 
+                              ? 'bg-[#e6f2fc] text-slate-800 border-[#8196b1]/40' 
+                              : 'bg-white text-slate-600 border-[#b8cce4]/70 hover:bg-slate-50/50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span>{sintoma.label}</span>
+                            {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#6AD8FF]"></span>}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
@@ -1570,6 +1614,89 @@ function App() {
                 </div>
               </div>
             </div>
+
+            {/* 2.5 SaaS Business Metrics Row (Horizontal Strip with Dividers) */}
+            <div className="border-[0.5px] border-[#b8cce4] rounded-2xl bg-white shadow-xs p-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 divide-y md:divide-y-0 md:divide-x divide-[#b8cce4]/50">
+                
+                {/* MRR */}
+                <div className="text-left md:px-2 space-y-1">
+                  <span className="text-[10px] text-[#8196b1] font-sans font-normal tracking-wide uppercase">
+                    Receita Recorrente Mensal (MRR)
+                  </span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xl font-display font-semibold text-slate-800">
+                      R$ 148.500
+                    </span>
+                    <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border-[0.5px] border-emerald-200 flex items-center gap-0.5">
+                      <TrendingUp className="w-2.5 h-2.5 text-emerald-600" />
+                      +12.40%
+                    </span>
+                  </div>
+                  <p className="text-[8px] text-[#8196b1] font-sans font-normal leading-normal">
+                    Assinaturas recorrentes ativas na plataforma
+                  </p>
+                </div>
+
+                {/* CAC */}
+                <div className="text-left pt-4 md:pt-0 md:pl-6 space-y-1">
+                  <span className="text-[10px] text-[#8196b1] font-sans font-normal tracking-wide uppercase">
+                    Custo de Aquisição (CAC)
+                  </span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xl font-display font-semibold text-slate-800">
+                      R$ 48,50
+                    </span>
+                    <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border-[0.5px] border-emerald-200 flex items-center gap-0.5">
+                      <TrendingDown className="w-2.5 h-2.5 text-emerald-600" />
+                      -6.20%
+                    </span>
+                  </div>
+                  <p className="text-[8px] text-[#8196b1] font-sans font-normal leading-normal">
+                    Média de investimento em marketing por usuário
+                  </p>
+                </div>
+
+                {/* LTV */}
+                <div className="text-left pt-4 md:pt-0 md:pl-6 space-y-1">
+                  <span className="text-[10px] text-[#8196b1] font-sans font-normal tracking-wide uppercase">
+                    Lifetime Value (LTV)
+                  </span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xl font-display font-semibold text-slate-800">
+                      R$ 692,00
+                    </span>
+                    <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border-[0.5px] border-emerald-200 flex items-center gap-0.5">
+                      <TrendingUp className="w-2.5 h-2.5 text-emerald-600" />
+                      +15.03%
+                    </span>
+                  </div>
+                  <p className="text-[8px] text-[#8196b1] font-sans font-normal leading-normal">
+                    Valor gerado pelo cliente ao longo da jornada
+                  </p>
+                </div>
+
+                {/* Partner Churn */}
+                <div className="text-left pt-4 md:pt-0 md:pl-6 space-y-1">
+                  <span className="text-[10px] text-[#8196b1] font-sans font-normal tracking-wide uppercase">
+                    Evasão de Parceiros (Churn)
+                  </span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xl font-display font-semibold text-slate-800">
+                      2,4%
+                    </span>
+                    <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border-[0.5px] border-emerald-200 flex items-center gap-0.5">
+                      <TrendingDown className="w-2.5 h-2.5 text-emerald-600" />
+                      -0.45%
+                    </span>
+                  </div>
+                  <p className="text-[8px] text-[#8196b1] font-sans font-normal leading-normal">
+                    Taxa de churn de clínicas parceiras (mensal)
+                  </p>
+                </div>
+
+              </div>
+            </div>
             
             {/* 3. Main Analytics Row */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
@@ -1832,147 +1959,86 @@ function App() {
                 </div>
               </div>
               
-              {/* Column B - Weekly Snapshots & Professional Activity (25% Width -> lg:col-span-1) */}
-              <div className="lg:col-span-1 flex flex-col justify-between gap-6">
-                
-                {/* Stacked Stat Micro-Cards (3 Small Cards) */}
-                <div className="space-y-4">
-                  {[
-                    { 
-                      title: 'Visitas', 
-                      value: '1.256', 
-                      trend: '+15.03%', 
-                      up: true,
-                      desc: 'Acessos únicos na plataforma' 
-                    },
-                    { 
-                      title: 'Novos usuários', 
-                      value: '150', 
-                      trend: '+10.03%', 
-                      up: true,
-                      desc: 'Cadastros validados no período' 
-                    },
-                    { 
-                      title: 'Nota média (Sessões)', 
-                      value: '4,3', 
-                      trend: '-0.03%', 
-                      up: false,
-                      desc: 'Mapeamento NPS pós-atendimento' 
-                    }
-                  ].map((stat) => (
-                    <div 
-                      key={stat.title} 
-                      className="border-[0.5px] border-[#b8cce4] rounded-xl p-4 bg-white flex items-center justify-between shadow-xs text-left"
-                    >
-                      <div className="space-y-1">
-                        <span className="text-[10px] text-[#8196b1] font-sans font-normal tracking-wide uppercase">
-                          {stat.title}
-                        </span>
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-xl font-display font-semibold text-slate-800">
-                            {stat.value}
-                          </span>
-                          <span className={`text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
-                            stat.up 
-                              ? 'bg-emerald-50 text-emerald-700 border-[0.5px] border-emerald-200' 
-                              : 'bg-red-50 text-red-600 border-[0.5px] border-red-200'
-                          }`}>
-                            {stat.up ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
-                            {stat.trend}
-                          </span>
-                        </div>
-                        <p className="text-[8.5px] text-[#8196b1] font-sans font-normal leading-normal">
-                          {stat.desc}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+              {/* Column B - Professional Activity (25% Width -> lg:col-span-1) */}
+              <div className="lg:col-span-1 border-[0.5px] border-[#b8cce4] rounded-2xl p-5 bg-white flex flex-col justify-between shadow-xs text-left h-full">
+                <div>
+                  <h4 className="text-xs font-display font-semibold text-slate-800 uppercase tracking-wider">
+                    Atividade dos Profissionais
+                  </h4>
+                  <span className="text-[10px] text-[#8196b1] font-sans font-normal block mt-1 leading-normal">
+                    Fluxo de entrada e saída diário de terapeutas parceiros
+                  </span>
                 </div>
                 
-                {/* Professional Activity Graph */}
-                <div className="border-[0.5px] border-[#b8cce4] rounded-xl p-4 bg-white flex flex-col justify-between shadow-xs text-left h-full">
-                  <div>
-                    <h4 className="text-[10px] font-display font-semibold text-slate-800 uppercase tracking-wider">
-                      Atividade dos Profissionais
-                    </h4>
-                    <span className="text-[8px] text-[#8196b1] font-sans font-normal block -mt-0.5">
-                      Fluxo de entrada e saída diário
-                    </span>
-                  </div>
-                  
-                  {/* Professional Activity SVG */}
-                  <div className="h-28 w-full mt-4 relative">
-                    <svg className="w-full h-full overflow-visible" viewBox="0 0 200 100" preserveAspectRatio="none">
-                      {/* Grid Reference lines */}
-                      {[0, 1, 2].map((i) => (
-                        <line 
-                          key={i} 
-                          x1="20" 
-                          y1="15 + i * 30" 
-                          x2="180" 
-                          y2="15 + i * 30" 
-                          stroke="#b8cce4" 
-                          strokeWidth="0.3" 
-                          strokeDasharray="2 2" 
-                        />
-                      ))}
-                      
-                      {/* Entrada Curve (Green) */}
-                      <path 
-                        d="M 20 40 C 47.5 15, 47.5 15, 75 15 C 102.5 15, 102.5 65, 130 65 C 157.5 65, 157.5 30, 185 30" 
-                        fill="none" 
-                        stroke="#10B981" 
-                        strokeWidth="1.8" 
-                        strokeLinecap="round"
+                {/* Professional Activity SVG */}
+                <div className="h-44 w-full mt-6 relative">
+                  <svg className="w-full h-full overflow-visible" viewBox="0 0 200 100" preserveAspectRatio="none">
+                    {/* Grid Reference lines */}
+                    {[0, 1, 2, 3].map((i) => (
+                      <line 
+                        key={i} 
+                        x1="20" 
+                        y1="10 + i * 26" 
+                        x2="180" 
+                        y2="10 + i * 26" 
+                        stroke="#b8cce4" 
+                        strokeWidth="0.3" 
+                        strokeDasharray="2 2" 
                       />
+                    ))}
+                    
+                    {/* Entrada Curve (Green) */}
+                    <path 
+                      d="M 20 40 C 47.5 15, 47.5 15, 75 15 C 102.5 15, 102.5 65, 130 65 C 157.5 65, 157.5 30, 185 30" 
+                      fill="none" 
+                      stroke="#10B981" 
+                      strokeWidth="1.8" 
+                      strokeLinecap="round"
+                    />
+                    
+                    {/* Saída Curve (Red) */}
+                    <path 
+                      d="M 20 75 C 47.5 55, 47.5 55, 75 55 C 102.5 55, 102.5 25, 130 25 C 157.5 25, 157.5 60, 185 60" 
+                      fill="none" 
+                      stroke="#EF4444" 
+                      strokeWidth="1.5" 
+                      strokeLinecap="round"
+                    />
+                    
+                    {/* Highlighted marker with inline tooltip bubble value "32" at 8:00 (x=20, y=40) */}
+                    <g transform="translate(20, 40)">
+                      {/* Marker Dot */}
+                      <circle cx="0" cy="0" r="3.5" fill="#10B981" stroke="#ffffff" strokeWidth="1.2" />
                       
-                      {/* Saída Curve (Red) */}
-                      <path 
-                        d="M 20 75 C 47.5 55, 47.5 55, 75 55 C 102.5 55, 102.5 25, 130 25 C 157.5 25, 157.5 60, 185 60" 
-                        fill="none" 
-                        stroke="#EF4444" 
-                        strokeWidth="1.5" 
-                        strokeLinecap="round"
-                      />
-                      
-                      {/* Highlighted marker with inline tooltip bubble value "32" at 8:00 (x=20, y=40) */}
-                      <g transform="translate(20, 40)">
-                        {/* Marker Dot */}
-                        <circle cx="0" cy="0" r="3.5" fill="#10B981" stroke="#ffffff" strokeWidth="1.2" />
-                        
-                        {/* Custom bubble indicator */}
-                        {/* Triangle pointer */}
-                        <polygon points="-3,-10 3,-10 0,-6" fill="#10B981" />
-                        {/* Rectangle box */}
-                        <rect x="-10" y="-23" width="20" height="13" rx="3" fill="#10B981" />
-                        {/* Text */}
-                        <text x="0" y="-14" fill="#ffffff" fontSize="8" fontWeight="bold" fontFamily="monospace" textAnchor="middle">32</text>
-                      </g>
-                      
-                      {/* X-axis labels */}
-                      {['8:00', '12:00', '16:00', '20:00'].map((time, idx) => (
-                        <text 
-                          key={time} 
-                          x={20 + idx * 55} 
-                          y="95" 
-                          className="text-[8px] fill-[#8196b1] font-sans font-normal" 
-                          textAnchor="middle"
-                        >
-                          {time}
-                        </text>
-                      ))}
-                    </svg>
-                  </div>
-                  
-                  {/* Legend below Activity */}
-                  <div className="flex gap-3 pt-2 text-[8px] font-sans font-normal text-[#8196b1] border-t-[0.5px] border-[#b8cce4]/40">
-                    <span className="flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Entrada
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span> Saída
-                    </span>
-                  </div>
+                      {/* Custom bubble indicator */}
+                      <polygon points="-3,-10 3,-10 0,-6" fill="#10B981" />
+                      <rect x="-10" y="-23" width="20" height="13" rx="3" fill="#10B981" />
+                      <text x="0" y="-14" fill="#ffffff" fontSize="8" fontWeight="bold" fontFamily="monospace" textAnchor="middle">32</text>
+                    </g>
+                    
+                    {/* X-axis labels */}
+                    {['8:00', '12:00', '16:00', '20:00'].map((time, idx) => (
+                      <text 
+                        key={time} 
+                        x={20 + idx * 55} 
+                        y="95" 
+                        className="text-[9px] fill-[#8196b1] font-sans font-normal" 
+                        textAnchor="middle"
+                      >
+                        {time}
+                      </text>
+                    ))}
+                  </svg>
+                </div>
+                
+                {/* Legend below Activity */}
+                <div className="flex gap-4 pt-4 text-[10px] font-sans font-normal text-[#8196b1] border-t-[0.5px] border-[#b8cce4]/40 mt-4">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Entrada
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> Saída
+                  </span>
                 </div>
               </div>
               
