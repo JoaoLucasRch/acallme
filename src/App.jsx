@@ -88,6 +88,33 @@ const getCurvePath = (data, maxVal, minVal = 0) => {
   return path;
 };
 
+// Helper for SVG smooth Bezier hourly curve calculation (8 points)
+const getHourlyCurvePath = (data, maxVal, minVal = 0) => {
+  if (!data || data.length === 0) return '';
+  const W = 350; // width of chart area
+  const H = 120; // height of chart area
+  const paddingLeft = 40;
+  const stepX = 50; // 8 points from 0 to 7 -> 7 * 50 = 350 width
+  const points = data.map((v, i) => {
+    const x = paddingLeft + i * stepX;
+    const range = maxVal - minVal;
+    const y = 150 - ((v - minVal) / range) * H; // 150 is the baseline of y
+    return { x, y };
+  });
+  
+  let path = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i];
+    const p1 = points[i+1];
+    const cpX1 = p0.x + stepX / 2;
+    const cpY1 = p0.y;
+    const cpX2 = p1.x - stepX / 2;
+    const cpY2 = p1.y;
+    path += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${p1.x} ${p1.y}`;
+  }
+  return path;
+};
+
 function App() {
   // Navigation State
   const [activeProcess, setActiveProcess] = useState('processo1'); // 'processo1' | 'processo2'
@@ -95,7 +122,8 @@ function App() {
   // View 1 States (Triagem & Recomendação)
   const [selectedDemanda, setSelectedDemanda] = useState('Ansiedade');
   const [selectedSintomas, setSelectedSintomas] = useState(['Insônia', 'Estresse']);
-  const [budgetLimit, setBudgetLimit] = useState(300);
+  const [budgetLimit, setBudgetLimit] = useState(405);
+  const [isAnyPrice, setIsAnyPrice] = useState(true);
   const [selectedEspecialidade, setSelectedEspecialidade] = useState('Todos');
   const [bookingState, setBookingState] = useState({
     'dr-lucas': 'idle', 'dra-beatriz': 'idle', 'terapeuta-mariana': 'idle',
@@ -115,6 +143,8 @@ function App() {
   const [activeDashboardTab, setActiveDashboardTab] = useState('users'); // 'users' | 'projects' | 'status'
   const [hoveredMonthIndex, setHoveredMonthIndex] = useState(null);
   const [donutFocus, setDonutFocus] = useState(null); // null | 'PLANTÃO' | 'RODAS' | 'AGENDA'
+  const [hoveredOnlineHour, setHoveredOnlineHour] = useState(null);
+  const [hoveredPlantaoHour, setHoveredPlantaoHour] = useState(null);
   
   // Jitsi Meet Simulated Control States
   const [isMuted, setIsMuted] = useState(false);
@@ -207,6 +237,16 @@ function App() {
     } else {
       setSelectedSintomas([...selectedSintomas, id]);
     }
+  };
+
+  // Reset all filters helper for demo convenience
+  const handleResetAllFilters = () => {
+    setSelectedDemanda('Ansiedade');
+    setSelectedSintomas([]);
+    setBudgetLimit(405);
+    setIsAnyPrice(true);
+    setSelectedEspecialidade('Todos');
+    triggerFeedback('Filtros redefinidos para os padrões da demonstração.');
   };
 
   // Trigger automated clinical note typing simulator
@@ -327,6 +367,7 @@ function App() {
       compatibility: 98,
       pills: ['TCC', 'Burnout', 'Ansiedade'],
       specialties: ['Ansiedade', 'Burnout'],
+      sintomasTratados: ['Estresse', 'Irritabilidade', 'Dificuldade de Foco', 'Procrastinação', 'Insegurança', 'Tensão Muscular', 'Fadiga Constante', 'Alterações de Sono/Apetite', 'Insônia'],
       getBio: (demanda, sintomas) => {
         const sintomaList = sintomas.length > 0 ? sintomas.slice(0, 2).join(' e ') : 'estresse';
         return `Especialista em TCC. Abordagem estruturada para reconfigurar padrões de ${demanda.toLowerCase()}. Focado na remissão de sintomas como ${sintomaList}.`;
@@ -342,6 +383,7 @@ function App() {
       compatibility: 97,
       pills: ['Psiquiatria', 'Burnout', 'Sono'],
       specialties: ['Ansiedade', 'Burnout'],
+      sintomasTratados: ['Insônia', 'Estresse', 'Palpitações Cardíacas', 'Falta de Ar', 'Ondas de Calor/Frio', 'Sudorese Excessiva', 'Fadiga Crônica', 'Alterações de Sono/Apetite'],
       getBio: (demanda, sintomas) => {
         const sintomaList = sintomas.length > 0 ? sintomas.slice(0, 2).join(' e ') : 'insônia';
         return `Psiquiatra integrativa. Suporte farmacológico e regulação do ritmo de sono para quadros de ${demanda.toLowerCase()} e ${sintomaList}.`;
@@ -357,6 +399,7 @@ function App() {
       compatibility: 89,
       pills: ['Mindfulness', 'Luto', 'Presença'],
       specialties: ['Luto', 'Burnout'],
+      sintomasTratados: ['Estresse', 'Irritabilidade', 'Fadiga Crônica', 'Aperto no Peito', 'Tensão Muscular', 'Falta de Ar', 'Fadiga Constante', 'Ondas de Calor/Frio'],
       getBio: (demanda, sintomas) => {
         const sintomaList = sintomas.length > 0 ? sintomas.slice(0, 2).join(' e ') : 'fadiga';
         return `Especialista em práticas de Mindfulness. Regulação e redução de estresse cotidiano para quadros de ${demanda.toLowerCase()} e ${sintomaList}.`;
@@ -372,6 +415,7 @@ function App() {
       compatibility: 96,
       pills: ['TCC', 'TOC', 'Fobia Social'],
       specialties: ['Ansiedade', 'Procrastinação'],
+      sintomasTratados: ['Insegurança', 'Procrastinação', 'Dificuldade de Foco', 'Estresse', 'Irritabilidade', 'Palpitações Cardíacas', 'Sudorese Excessiva'],
       getBio: (demanda) => `Tratamento estruturado de fobias e comportamentos compulsivos ligados à demanda de ${demanda.toLowerCase()}. Foco na superação prática e reabilitação integradora.`
     },
     {
@@ -384,6 +428,7 @@ function App() {
       compatibility: 94,
       pills: ['TCC', 'Psicoterapia Familiar', 'Luto'],
       specialties: ['Luto', 'Ansiedade'],
+      sintomasTratados: ['Aperto no Peito', 'Estresse', 'Irritabilidade', 'Insegurança', 'Tensão Muscular', 'Dores de Estômago', 'Alterações de Sono/Apetite'],
       getBio: (demanda) => `Suporte empático focado em reestruturação cognitiva. Condução experiente em processos de perda, luto e estresse pós-traumático decorrente de ${demanda.toLowerCase()}.`
     },
     {
@@ -396,6 +441,7 @@ function App() {
       compatibility: 92,
       pills: ['Psiquiatria', 'Farmacologia', 'TDAH'],
       specialties: ['Burnout', 'Ansiedade'],
+      sintomasTratados: ['Dificuldade de Foco', 'Procrastinação', 'Estresse', 'Fadiga Crônica', 'Palpitações Cardíacas', 'Falta de Ar', 'Sudorese Excessiva', 'Insônia'],
       getBio: (demanda) => `Avaliação neuropsiquiátrica focada em diagnóstico diferencial e otimização neuroquímica de sintomas de ansiedade, Burnout e déficit de foco crônico.`
     },
     {
@@ -408,6 +454,7 @@ function App() {
       compatibility: 91,
       pills: ['Fenomenologia', 'Acolhimento', 'Autoconhecimento'],
       specialties: ['Luto', 'Burnout'],
+      sintomasTratados: ['Estresse', 'Irritabilidade', 'Insegurança', 'Fadiga Crônica', 'Tensão Muscular', 'Dores de Estômago'],
       getBio: (demanda) => `Abordagem centrada na pessoa. Espaço seguro e acolhedor para explorar conflitos existenciais, regulação de estresse e suporte em demandas de ${demanda.toLowerCase()}.`
     },
     {
@@ -420,6 +467,7 @@ function App() {
       compatibility: 87,
       pills: ['Jungiana', 'Sonhos', 'Autoconhecimento'],
       specialties: ['Ansiedade', 'Procrastinação'],
+      sintomasTratados: ['Estresse', 'Insegurança', 'Insônia', 'Procrastinação', 'Dificuldade de Foco', 'Alterações de Sono/Apetite'],
       getBio: (demanda) => `Psicoterapia de orientação analítica jungiana. Investigação de processos inconscientes que retroalimentam a ansiedade crônica e as perdas de energia psíquica.`
     },
     {
@@ -432,6 +480,7 @@ function App() {
       compatibility: 88,
       pills: ['Sistêmica', 'Família', 'Burnout'],
       specialties: ['Burnout', 'Luto'],
+      sintomasTratados: ['Estresse', 'Fadiga Crônica', 'Fadiga Constante', 'Tensão Muscular', 'Dores de Estômago', 'Ondas de Calor/Frio'],
       getBio: (demanda) => `Tratamento com foco nas relações e sistemas dinâmicos. Excelente abordagem para gerenciar estresse corporativo ligado a quadros de ${demanda.toLowerCase()}.`
     },
     {
@@ -444,14 +493,171 @@ function App() {
       compatibility: 86,
       pills: ['Gestalt-terapia', 'Expressividade', 'Luto'],
       specialties: ['Luto', 'Procrastinação'],
+      sintomasTratados: ['Aperto no Peito', 'Estresse', 'Irritabilidade', 'Falta de Ar', 'Tensão Muscular', 'Ondas de Calor/Frio'],
       getBio: (demanda) => `Abordagem gestáltica focada na experiência do momento presente. Integração mente-corpo para alívio de sintomas de ansiedade e luto agudo.`
+    },
+    {
+      id: 'dra-renata',
+      name: 'Dra. Renata Vasconcelos',
+      role: 'Psicóloga Social',
+      registry: 'CRP 06/154920',
+      price: 65, // Psicóloga R$ 65 - 330
+      unsplashUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150&h=150',
+      compatibility: 95,
+      pills: ['Social', 'Acolhimento', 'Breve'],
+      specialties: ['Ansiedade', 'Procrastinação'],
+      sintomasTratados: ['Estresse', 'Insegurança', 'Procrastinação', 'Tensão Muscular', 'Insônia', 'Alterações de Sono/Apetite'],
+      getBio: (demanda) => `Psicoterapia de abordagem humanista focada em acessibilidade social. Foco no manejo de ansiedade cotidiana, estresse ocupacional e regulação da procrastinação.`
+    },
+    {
+      id: 'terapeuta-tiago',
+      name: 'Tiago Mendes',
+      role: 'Terapeuta Corporal',
+      registry: 'CRT 05/88122',
+      price: 80, // Terapeuta R$ 85 - 265
+      unsplashUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150',
+      compatibility: 91,
+      pills: ['Bioenergética', 'Somatic', 'Relaxamento'],
+      specialties: ['Burnout', 'Ansiedade'],
+      sintomasTratados: ['Tensão Muscular', 'Estresse', 'Palpitações Cardíacas', 'Sudorese Excessiva', 'Fadiga Constante', 'Ondas de Calor/Frio'],
+      getBio: (demanda) => `Práticas corporais integrativas focadas na liberação de tensões somáticas e estresse crônico. Suporte físico a sintomas associados à exaustão e ansiedade.`
+    },
+    {
+      id: 'dra-aline',
+      name: 'Dra. Aline Moreira',
+      role: 'Psicóloga Cognitiva',
+      registry: 'CRP 06/123490',
+      price: 110, // Psicóloga R$ 65 - 330
+      unsplashUrl: 'https://images.unsplash.com/photo-1548142813-c348350df52b?auto=format&fit=crop&q=80&w=150&h=150',
+      compatibility: 93,
+      pills: ['TCC', 'Hábitos', 'Produtividade'],
+      specialties: ['Procrastinação', 'Ansiedade'],
+      sintomasTratados: ['Dificuldade de Foco', 'Procrastinação', 'Estresse', 'Irritabilidade', 'Insônia', 'Fadiga Constante'],
+      getBio: (demanda) => `Desenvolvimento de estratégias cognitivo-comportamentais para superação de procrastinação, organization de rotinas e tratamento de ansiedade moderada.`
+    },
+    {
+      id: 'dr-arthur',
+      name: 'Dr. Arthur Silva',
+      role: 'Médico Psiquiatra',
+      registry: 'CRM-SP 249015',
+      price: 165, // Psiquiatra R$ 165 - 405
+      unsplashUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150',
+      compatibility: 90,
+      pills: ['Psiquiatria', 'Ansiedade Gen.', 'Prevenção'],
+      specialties: ['Ansiedade', 'Burnout'],
+      sintomasTratados: ['Insônia', 'Estresse', 'Palpitações Cardíacas', 'Falta de Ar', 'Sudorese Excessiva', 'Fadiga Crônica'],
+      getBio: (demanda) => `Médico psiquiatra com foco em atendimento clínico integrativo de baixo custo. Diagnóstico precoce de estresse crônico e suporte medicamentoso seguro.`
+    },
+    {
+      id: 'dr-marcelo',
+      name: 'Dr. Marcelo Santos',
+      role: 'Médico Psiquiatra',
+      registry: 'CRM-SP 189234',
+      price: 405, // Psiquiatra R$ 165 - 405
+      unsplashUrl: 'https://images.unsplash.com/photo-1582750433449-64c3828df750?auto=format&fit=crop&q=80&w=150&h=150',
+      compatibility: 96,
+      pills: ['Psiquiatria', 'Ansiedade Crônica', 'Especialista'],
+      specialties: ['Burnout', 'Ansiedade'],
+      sintomasTratados: ['Fadiga Crônica', 'Estresse', 'Palpitações Cardíacas', 'Falta de Ar', 'Insônia', 'Tensão Muscular'],
+      getBio: (demanda) => `Especialista em psiquiatria intervencionista. Foco na remissão de sintomas somáticos graves associados a quadros de ${demanda.toLowerCase()}.`
+    },
+    {
+      id: 'dra-vanessa',
+      name: 'Dra. Vanessa Lima',
+      role: 'Psicóloga Humanista',
+      registry: 'CRP 06/182736',
+      price: 75, // Psicóloga R$ 65 - 330
+      unsplashUrl: 'https://images.unsplash.com/photo-1594824813573-246434e33963?auto=format&fit=crop&q=80&w=150&h=150',
+      compatibility: 92,
+      pills: ['Existencial', 'Acolhimento', 'Foco no Luto'],
+      specialties: ['Luto', 'Ansiedade'],
+      sintomasTratados: ['Estresse', 'Dores de Estômago', 'Aperto no Peito', 'Ondas de Calor/Frio', 'Tensão Muscular', 'Alterações de Sono/Apetite'],
+      getBio: (demanda) => `Abordagem fenomenológico-existencial focada na escuta atenta dos sintomas físicos e emocionais decorrentes do ${demanda.toLowerCase()}.`
+    },
+    {
+      id: 'dra-juliana',
+      name: 'Dra. Juliana Rocha',
+      role: 'Psicóloga Cognitiva',
+      registry: 'CRP 05/119283',
+      price: 90, // Psicóloga R$ 65 - 330
+      unsplashUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150&h=150',
+      compatibility: 94,
+      pills: ['TCC', 'Organização', 'Produtividade'],
+      specialties: ['Procrastinação', 'Ansiedade'],
+      sintomasTratados: ['Procrastinação', 'Dificuldade de Foco', 'Insegurança', 'Estresse', 'Insônia'],
+      getBio: (demanda) => `Psicoterapia focada na quebra de ciclos de procrastinação associados a quadros de ${demanda.toLowerCase()} e estresse associado.`
+    },
+    {
+      id: 'dr-fernando',
+      name: 'Dr. Fernando Alencar',
+      role: 'Terapeuta Integrativo',
+      registry: 'CRT 04/99128',
+      price: 130, // Terapeuta R$ 85 - 265
+      unsplashUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150&h=150',
+      compatibility: 89,
+      pills: ['Relaxamento', 'Mindfulness', 'Equilíbrio'],
+      specialties: ['Burnout', 'Procrastinação'],
+      sintomasTratados: ['Fadiga Constante', 'Estresse', 'Dificuldade de Foco', 'Tensão Muscular', 'Sudorese Excessiva'],
+      getBio: (demanda) => `Terapias complementares e mindfulness para restabelecimento físico e mental contra o desgaste crônico e ${demanda.toLowerCase()}.`
+    },
+    {
+      id: 'dr-ricardo',
+      name: 'Dr. Ricardo Guedes',
+      role: 'Psicólogo Clínico',
+      registry: 'CRP 06/200394',
+      price: 250, // Psicólogo R$ 65 - 330
+      unsplashUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150',
+      compatibility: 95,
+      pills: ['Psicanálise', 'Ansiedade Crônica', 'Clínica'],
+      specialties: ['Ansiedade', 'Burnout'],
+      sintomasTratados: ['Tensão Muscular', 'Estresse', 'Palpitações Cardíacas', 'Insônia', 'Falta de Ar', 'Dores de Estômago'],
+      getBio: (demanda) => `Atendimento clínico analítico para compreensão aprofundada dos sintomas físicos e psíquicos da ${demanda.toLowerCase()}.`
+    },
+    {
+      id: 'dra-camila',
+      name: 'Dra. Camila Naves',
+      role: 'Terapeuta Corporal',
+      registry: 'CRT 06/78891',
+      price: 115, // Terapeuta R$ 85 - 265
+      unsplashUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150&h=150',
+      compatibility: 91,
+      pills: ['Somatic', 'Bioenergética', 'Trauma'],
+      specialties: ['Luto', 'Ansiedade'],
+      sintomasTratados: ['Tensão Muscular', 'Aperto no Peito', 'Falta de Ar', 'Ondas de Calor/Frio', 'Sudorese Excessiva', 'Fadiga Constante'],
+      getBio: (demanda) => `Abordagem somática integrativa focada na dissolução da tensão muscular crônica decorrente de quadros de ${demanda.toLowerCase()}.`
+    },
+    {
+      id: 'dr-henrique',
+      name: 'Dr. Henrique Prado',
+      role: 'Psicólogo Clínico',
+      registry: 'CRP 06/90283',
+      price: 310, // Psicólogo R$ 65 - 330
+      unsplashUrl: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=150&h=150',
+      compatibility: 93,
+      pills: ['TCC', 'Planejamento', 'Exaustão'],
+      specialties: ['Procrastinação', 'Burnout'],
+      sintomasTratados: ['Estresse', 'Dificuldade de Foco', 'Procrastinação', 'Fadiga Constante', 'Insônia', 'Alterações de Sono/Apetite'],
+      getBio: (demanda) => `TCC direcionada a reabilitação de rotinas saudáveis e superação do desgaste de ${demanda.toLowerCase()}.`
+    },
+    {
+      id: 'dra-marina',
+      name: 'Dra. Marina Brandão',
+      role: 'Médica Psiquiatra',
+      registry: 'CRM-SP 289130',
+      price: 280, // Psiquiatra R$ 165 - 405
+      unsplashUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=150&h=150',
+      compatibility: 94,
+      pills: ['Psiquiatria', 'Farmacoterapia', 'Sono'],
+      specialties: ['Ansiedade', 'Luto'],
+      sintomasTratados: ['Palpitações Cardíacas', 'Alterações de Sono/Apetite', 'Insônia', 'Falta de Ar', 'Sudorese Excessiva', 'Aperto no Peito'],
+      getBio: (demanda) => `Suporte farmacoterápico seguro com foco em reajuste biológico para manifestações graves de ${demanda.toLowerCase()}.`
     }
   ];
 
   // Dynamic real-time filter logic for matched professionals list
   const filteredProfessionals = matchedProfessionals.filter(p => {
     // 1. Price Limit Slider Filter
-    if (p.price > budgetLimit) return false;
+    if (!isAnyPrice && p.price > budgetLimit) return false;
     
     // 2. Demand Category Filter
     if (selectedDemanda && !p.specialties.includes(selectedDemanda)) return false;
@@ -461,6 +667,12 @@ function App() {
       if (selectedEspecialidade === 'Psicólogo' && p.role.indexOf('Psicólog') === -1) return false;
       if (selectedEspecialidade === 'Psiquiatra' && p.role.indexOf('Psiquiatr') === -1) return false;
       if (selectedEspecialidade === 'Terapeuta' && p.role.indexOf('Terapeuta') === -1) return false;
+    }
+    
+    // 4. Symptoms Filter (Must match at least one selected symptom if any are selected)
+    if (selectedSintomas.length > 0) {
+      const matchesSymptom = p.sintomasTratados?.some(s => selectedSintomas.includes(s));
+      if (!matchesSymptom) return false;
     }
     
     return true;
@@ -700,23 +912,49 @@ function App() {
                 </div>
 
                 {/* Price Slider */}
-                <div className="space-y-1.5 pt-2">
-                  <div className="flex justify-between text-[10px] text-[#8196b1] font-sans">
-                    <span>Preço Máximo de Consulta:</span>
-                    <span className="font-display font-semibold text-slate-700">Até R$ {budgetLimit}</span>
+                <div className="space-y-2 pt-2">
+                  <div className="flex justify-between items-center text-[10px] text-[#8196b1] font-sans">
+                    <span className="font-display font-semibold uppercase tracking-wider text-[9px]">Preço Máximo de Consulta</span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setIsAnyPrice(!isAnyPrice)}
+                        className={`px-2 py-0.5 rounded-full text-[9px] font-display font-semibold transition-all border-[0.5px] cursor-pointer ${
+                          isAnyPrice 
+                            ? 'bg-[#e6f2fc] text-slate-800 border-[#8fbdf1]' 
+                            : 'bg-white text-[#8196b1] border-[#b8cce4]/70 hover:text-slate-700'
+                        }`}
+                      >
+                        Qualquer valor
+                      </button>
+                      {!isAnyPrice && (
+                        <span className="font-display font-semibold text-slate-700 bg-slate-50 border-[0.5px] border-[#b8cce4]/50 px-1.5 py-0.5 rounded">
+                          Até R$ {budgetLimit}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <input 
-                    type="range" 
-                    min="65" 
-                    max="405" 
-                    step="5"
-                    value={budgetLimit}
-                    onChange={(e) => setBudgetLimit(Number(e.target.value))}
-                    className="w-full h-1 bg-[#e6f2fc] rounded-lg appearance-none cursor-pointer accent-[#8fbdf1]" 
-                  />
-                  <div className="flex justify-between text-[8px] text-[#8196b1] font-sans">
-                    <span>R$ 65</span>
-                    <span>R$ 405</span>
+                  
+                  <div className="relative pt-1">
+                    <input 
+                      type="range" 
+                      min="65" 
+                      max="405" 
+                      step="5"
+                      disabled={isAnyPrice}
+                      value={isAnyPrice ? 405 : budgetLimit}
+                      onChange={(e) => {
+                        setBudgetLimit(Number(e.target.value));
+                        setIsAnyPrice(false);
+                      }}
+                      className={`w-full h-1 rounded-lg appearance-none cursor-pointer accent-[#8fbdf1] transition-all duration-300 ${
+                        isAnyPrice ? 'bg-[#e6f2fc]/40 opacity-40 cursor-not-allowed' : 'bg-[#e6f2fc]'
+                      }`} 
+                    />
+                    <div className="flex justify-between text-[8px] text-[#8196b1] font-sans mt-1">
+                      <span>R$ 65</span>
+                      <span>R$ 405</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -739,7 +977,7 @@ function App() {
               <div className="space-y-4 max-h-[660px] overflow-y-auto pr-2.5 scroll-smooth">
                 {filteredProfessionals.length > 0 ? (
                   filteredProfessionals.map((prof) => {
-                    const status = bookingState[prof.id];
+                    const status = bookingState[prof.id] || 'idle';
                     return (
                       <div 
                         key={prof.id}
@@ -835,9 +1073,22 @@ function App() {
                     );
                   })
                 ) : (
-                  <div className="border-[0.5px] border-dashed border-[#b8cce4] rounded-xl p-10 text-center space-y-3 bg-white">
-                    <Info className="w-6 h-6 text-[#8196b1]/50 mx-auto" />
-                    <p className="text-xs text-[#8196b1] font-sans font-normal">Nenhum clínico encontrado nesta faixa de preço para a demanda de {selectedDemanda}.</p>
+                  <div className="border-[0.5px] border-dashed border-[#b8cce4] rounded-xl p-10 text-center space-y-4 bg-white animate-fadeIn">
+                    <div className="w-10 h-10 rounded-full bg-[#e6f2fc] text-[#8fbdf1] flex items-center justify-center mx-auto border-[0.5px] border-[#b8cce4]/60 shadow-xs">
+                      <Info className="w-5 h-5" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-slate-800 font-display font-semibold">Nenhum clínico encontrado</p>
+                      <p className="text-[11px] text-[#8196b1] font-sans font-normal leading-relaxed max-w-xs mx-auto">
+                        Não encontramos profissionais para a combinação atual de preço ({isAnyPrice ? 'Qualquer valor' : `Até R$ ${budgetLimit}`}), especialidade ({selectedEspecialidade}) ou sintomas selecionados.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleResetAllFilters}
+                      className="bg-[#e6f2fc] hover:bg-[#8fbdf1]/20 text-[#8fbdf1] hover:text-slate-800 border-[0.5px] border-[#b8cce4]/70 px-4 py-2 rounded-lg text-[10px] font-display font-semibold transition-all shadow-xs cursor-pointer"
+                    >
+                      Limpar Filtros & Redefinir
+                    </button>
                   </div>
                 )}
               </div>
@@ -2164,6 +2415,291 @@ function App() {
                   })}
                 </div>
               </div>
+            </div>
+
+            {/* 4. Triage & Online Patients Analytics Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch mt-6">
+              
+              {/* Card A - Online Patients Peak Hours */}
+              <div className="border-[0.5px] border-[#b8cce4] rounded-2xl p-5 bg-white flex flex-col justify-between shadow-xs">
+                <div>
+                  <h3 className="text-xs font-display font-semibold text-slate-800 uppercase tracking-wider text-left">
+                    Pacientes Online Procurando Profissional
+                  </h3>
+                  <span className="text-[10px] text-[#8196b1] font-sans font-normal block mt-1 leading-normal text-left">
+                    Horários de pico de pacientes navegando e aplicando filtros na plataforma
+                  </span>
+                  
+                  {/* Chart Container */}
+                  <div className="relative mt-6 h-48 w-full">
+                    {/* Tooltip Overlay */}
+                    {hoveredOnlineHour !== null && (
+                      <div 
+                        className="absolute bg-white border-[0.5px] border-[#b8cce4] rounded-xl p-3 shadow-lg z-30 pointer-events-none text-left space-y-1 animate-fadeIn"
+                        style={{
+                          left: `${Math.max(10, Math.min(260, 10 + hoveredOnlineHour * 42))}px`,
+                          top: '10px'
+                        }}
+                      >
+                        <span className="text-[9px] uppercase tracking-wider text-[#8196b1] font-display font-semibold block">
+                          {['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'][hoveredOnlineHour]}
+                        </span>
+                        <div className="flex items-center gap-4 justify-between">
+                          <span className="text-[10px] text-slate-700">Pacientes Ativos:</span>
+                          <span className="text-xs font-display font-semibold text-[#8fbdf1] font-mono">
+                            {[18, 35, 48, 29, 36, 52, 68, 22][hoveredOnlineHour]}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <svg className="w-full h-full overflow-visible" viewBox="0 0 420 180" preserveAspectRatio="none">
+                      <defs>
+                        <linearGradient id="onlineGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#8fbdf1" stopOpacity="0.25"/>
+                          <stop offset="100%" stopColor="#8fbdf1" stopOpacity="0.0"/>
+                        </linearGradient>
+                      </defs>
+                      
+                      {/* Grid Reference lines */}
+                      {[0, 1, 2, 3].map((tickIdx) => {
+                        const y = 30 + tickIdx * 40;
+                        return (
+                          <g key={tickIdx}>
+                            <line x1="40" y1={y} x2="390" y2={y} stroke="#b8cce4" strokeWidth="0.4" strokeDasharray="2 2" />
+                            <text x="10" y={y + 3} className="text-[8px] fill-[#8196b1] font-sans font-normal text-right font-mono" textAnchor="start">
+                              {80 - tickIdx * 20}
+                            </text>
+                          </g>
+                        );
+                      })}
+                      
+                      {/* X Axis Hours Labels */}
+                      {['08h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'].map((h, idx) => {
+                        const x = 40 + idx * 50;
+                        return (
+                          <text key={h} x={x} y="172" className="text-[9px] fill-[#8196b1] font-display font-semibold" textAnchor="middle">
+                            {h}
+                          </text>
+                        );
+                      })}
+                      
+                      {/* Curves */}
+                      {(() => {
+                        const onlineData = [18, 35, 48, 29, 36, 52, 68, 22];
+                        const curvePath = getHourlyCurvePath(onlineData, 80);
+                        
+                        let hoverPoints = null;
+                        if (hoveredOnlineHour !== null) {
+                          const x = 40 + hoveredOnlineHour * 50;
+                          const y = 150 - (onlineData[hoveredOnlineHour] / 80) * 120;
+                          hoverPoints = { x, y };
+                        }
+                        
+                        return (
+                          <>
+                            {/* Area Fill */}
+                            <path d={`${curvePath} L 390 150 L 40 150 Z`} fill="url(#onlineGrad)" />
+                            
+                            {/* Line Stroke */}
+                            <path d={curvePath} fill="none" stroke="#8fbdf1" strokeWidth="2.2" strokeLinecap="round" />
+                            
+                            {/* Dotted hover line */}
+                            {hoverPoints && (
+                              <line x1={hoverPoints.x} y1="30" x2={hoverPoints.x} y2="150" stroke="#8fbdf1" strokeWidth="0.8" strokeDasharray="2 2" />
+                            )}
+                            
+                            {/* All Nodes */}
+                            {onlineData.map((v, idx) => {
+                              const cx = 40 + idx * 50;
+                              const cy = 150 - (v / 80) * 120;
+                              const isHovered = hoveredOnlineHour === idx;
+                              return (
+                                <circle 
+                                  key={`o-${idx}`} 
+                                  cx={cx} 
+                                  cy={cy} 
+                                  r={isHovered ? 4.5 : 2.5} 
+                                  fill="#8fbdf1" 
+                                  stroke="#ffffff" 
+                                  strokeWidth="1" 
+                                />
+                              );
+                            })}
+                            
+                            {/* Hover Ping */}
+                            {hoverPoints && (
+                              <>
+                                <circle cx={hoverPoints.x} cy={hoverPoints.y} r="6" fill="#8fbdf1" opacity="0.3" className="animate-ping" />
+                                <circle cx={hoverPoints.x} cy={hoverPoints.y} r="3.5" fill="#6AD8FF" stroke="#ffffff" strokeWidth="1.5" />
+                              </>
+                            )}
+                            
+                            {/* Transparent Clickable Hover Zones */}
+                            {onlineData.map((_, idx) => {
+                              const x = 40 + idx * 50 - 25;
+                              return (
+                                <rect
+                                  key={`online-zone-${idx}`}
+                                  x={x}
+                                  y="20"
+                                  width="50"
+                                  height="130"
+                                  fill="transparent"
+                                  className="cursor-pointer"
+                                  onMouseEnter={() => setHoveredOnlineHour(idx)}
+                                  onMouseLeave={() => setHoveredOnlineHour(null)}
+                                />
+                              );
+                            })}
+                          </>
+                        );
+                      })()}
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card B - Duty Queue Triage Peak Hours */}
+              <div className="border-[0.5px] border-[#b8cce4] rounded-2xl p-5 bg-white flex flex-col justify-between shadow-xs">
+                <div>
+                  <h3 className="text-xs font-display font-semibold text-slate-800 uppercase tracking-wider text-left">
+                    Pacientes querendo ser atendidos no Plantão
+                  </h3>
+                  <span className="text-[10px] text-[#8196b1] font-sans font-normal block mt-1 leading-normal text-left">
+                    Fluxo de pacientes abrindo chamadas de triagem de urgência na fila de plantão
+                  </span>
+                  
+                  {/* Chart Container */}
+                  <div className="relative mt-6 h-48 w-full">
+                    {/* Tooltip Overlay */}
+                    {hoveredPlantaoHour !== null && (
+                      <div 
+                        className="absolute bg-white border-[0.5px] border-[#b8cce4] rounded-xl p-3 shadow-lg z-30 pointer-events-none text-left space-y-1 animate-fadeIn"
+                        style={{
+                          left: `${Math.max(10, Math.min(260, 10 + hoveredPlantaoHour * 42))}px`,
+                          top: '10px'
+                        }}
+                      >
+                        <span className="text-[9px] uppercase tracking-wider text-[#8196b1] font-display font-semibold block">
+                          {['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'][hoveredPlantaoHour]}
+                        </span>
+                        <div className="flex items-center gap-4 justify-between">
+                          <span className="text-[10px] text-slate-700">Na Fila do Plantão:</span>
+                          <span className="text-xs font-display font-semibold text-[#6E5494] font-mono">
+                            {[3, 11, 24, 8, 15, 30, 42, 12][hoveredPlantaoHour]} p.
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <svg className="w-full h-full overflow-visible" viewBox="0 0 420 180" preserveAspectRatio="none">
+                      <defs>
+                        <linearGradient id="plantaoGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#6E5494" stopOpacity="0.25"/>
+                          <stop offset="100%" stopColor="#6E5494" stopOpacity="0.0"/>
+                        </linearGradient>
+                      </defs>
+                      
+                      {/* Grid Reference lines */}
+                      {[0, 1, 2, 3].map((tickIdx) => {
+                        const y = 30 + tickIdx * 40;
+                        return (
+                          <g key={tickIdx}>
+                            <line x1="40" y1={y} x2="390" y2={y} stroke="#b8cce4" strokeWidth="0.4" strokeDasharray="2 2" />
+                            <text x="10" y={y + 3} className="text-[8px] fill-[#8196b1] font-sans font-normal text-right font-mono" textAnchor="start">
+                              {50 - tickIdx * 12.5}
+                            </text>
+                          </g>
+                        );
+                      })}
+                      
+                      {/* X Axis Hours Labels */}
+                      {['08h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'].map((h, idx) => {
+                        const x = 40 + idx * 50;
+                        return (
+                          <text key={h} x={x} y="172" className="text-[9px] fill-[#8196b1] font-display font-semibold" textAnchor="middle">
+                            {h}
+                          </text>
+                        );
+                      })}
+                      
+                      {/* Curves */}
+                      {(() => {
+                        const plantaoData = [3, 11, 24, 8, 15, 30, 42, 12];
+                        const curvePath = getHourlyCurvePath(plantaoData, 50);
+                        
+                        let hoverPoints = null;
+                        if (hoveredPlantaoHour !== null) {
+                          const x = 40 + hoveredPlantaoHour * 50;
+                          const y = 150 - (plantaoData[hoveredPlantaoHour] / 50) * 120;
+                          hoverPoints = { x, y };
+                        }
+                        
+                        return (
+                          <>
+                            {/* Area Fill */}
+                            <path d={`${curvePath} L 390 150 L 40 150 Z`} fill="url(#plantaoGrad)" />
+                            
+                            {/* Line Stroke */}
+                            <path d={curvePath} fill="none" stroke="#6E5494" strokeWidth="2.2" strokeLinecap="round" />
+                            
+                            {/* Dotted hover line */}
+                            {hoverPoints && (
+                              <line x1={hoverPoints.x} y1="30" x2={hoverPoints.x} y2="150" stroke="#6E5494" strokeWidth="0.8" strokeDasharray="2 2" />
+                            )}
+                            
+                            {/* All Nodes */}
+                            {plantaoData.map((v, idx) => {
+                              const cx = 40 + idx * 50;
+                              const cy = 150 - (v / 50) * 120;
+                              const isHovered = hoveredPlantaoHour === idx;
+                              return (
+                                <circle 
+                                  key={`p-${idx}`} 
+                                  cx={cx} 
+                                  cy={cy} 
+                                  r={isHovered ? 4.5 : 2.5} 
+                                  fill="#6E5494" 
+                                  stroke="#ffffff" 
+                                  strokeWidth="1" 
+                                />
+                              );
+                            })}
+                            
+                            {/* Hover Ping */}
+                            {hoverPoints && (
+                              <>
+                                <circle cx={hoverPoints.x} cy={hoverPoints.y} r="6" fill="#6E5494" opacity="0.3" className="animate-ping" />
+                                <circle cx={hoverPoints.x} cy={hoverPoints.y} r="3.5" fill="#6E5494" stroke="#ffffff" strokeWidth="1.5" />
+                              </>
+                            )}
+                            
+                            {/* Transparent Clickable Hover Zones */}
+                            {plantaoData.map((_, idx) => {
+                              const x = 40 + idx * 50 - 25;
+                              return (
+                                <rect
+                                  key={`plantao-zone-${idx}`}
+                                  x={x}
+                                  y="20"
+                                  width="50"
+                                  height="130"
+                                  fill="transparent"
+                                  className="cursor-pointer"
+                                  onMouseEnter={() => setHoveredPlantaoHour(idx)}
+                                  onMouseLeave={() => setHoveredPlantaoHour(null)}
+                                />
+                              );
+                            })}
+                          </>
+                        );
+                      })()}
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         )}
